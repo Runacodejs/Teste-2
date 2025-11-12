@@ -88,6 +88,14 @@
   </header>
 
   <div class="container">
+    <h2>Gerar Letra de Música</h2>
+    <label>Tema da letra:</label>
+    <textarea id="temaLetra" placeholder="Digite o tema da letra..."></textarea>
+    <button onclick="gerarLetra()">📝 Gerar Letra</button>
+    <div id="letraResultado" class="result"></div>
+
+    <hr style="margin: 2rem 0; border-color: #333;">
+
     <h2>Gerar Música</h2>
     <label>Escolha o estilo musical:</label>
     <select id="estilo">
@@ -101,7 +109,7 @@
     </select>
 
     <label>Letra (opcional):</label>
-    <textarea id="letra" placeholder="Digite sua letra ou deixe em branco para a IA criar..."></textarea>
+    <textarea id="letra" placeholder="A letra gerada pela IA aparecerá aqui. Você também pode digitar sua própria letra."></textarea>
 
     <button onclick="gerarMusica()">🎧 Gerar Música</button>
 
@@ -119,9 +127,50 @@
   </div>
 
   <script>
+    async function gerarLetra() {
+      const tema = document.getElementById("temaLetra").value.trim();
+      const resultado = document.getElementById("letraResultado");
+      const letraTextarea = document.getElementById("letra");
+
+      if (tema === "") {
+        resultado.style.display = "block";
+        resultado.innerHTML = `<b>IA:</b> Por favor, descreva o tema da letra que deseja gerar.`;
+        return;
+      }
+
+      resultado.style.display = "block";
+      resultado.innerHTML = `<b>IA:</b> Gerando letra... ✍️`;
+
+      try {
+        const response = await fetch("http://localhost:3002/generate-lyrics", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ prompt: tema })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.lyrics) {
+          resultado.innerHTML = `<b>IA:</b> Letra gerada com sucesso!`;
+          letraTextarea.value = data.lyrics;
+        } else {
+          resultado.innerHTML = `<b>IA:</b> Ocorreu um erro ao gerar a letra. ${data.err || ''}`;
+        }
+      } catch (error) {
+        resultado.innerHTML = `<b>IA:</b> Ocorreu um erro ao gerar a letra. Verifique o console para mais detalhes.`;
+        console.error("Erro ao gerar letra:", error);
+      }
+    }
+
     async function gerarMusica() {
       const estilo = document.getElementById("estilo").value;
-      const letra = document.getElementById("letra").value.trim();
+      let letra = document.getElementById("letra").value.trim();
       const resultado = document.getElementById("musicaResultado");
 
       resultado.style.display = "block";
