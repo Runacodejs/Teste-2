@@ -119,17 +119,42 @@
   </div>
 
   <script>
-    function gerarMusica() {
+    async function gerarMusica() {
       const estilo = document.getElementById("estilo").value;
       const letra = document.getElementById("letra").value.trim();
       const resultado = document.getElementById("musicaResultado");
 
       resultado.style.display = "block";
+      resultado.innerHTML = `<b>IA:</b> Gerando música... 🎵`;
 
-      if (letra === "") {
-        resultado.innerHTML = `<b>IA:</b> Criando uma letra e música no estilo <b>${estilo}</b>... 🎵<br><br><i>(Aqui entraria a integração com a API de geração de música)</i>`;
-      } else {
-        resultado.innerHTML = `<b>IA:</b> Gerando uma música no estilo <b>${estilo}</b> usando sua letra... 🎶<br><br><i>${letra}</i>`;
+      let prompt = `um som no estilo ${estilo}`;
+      if (letra) {
+        prompt += ` com a seguinte letra: ${letra}`;
+      }
+
+      try {
+        const response = await fetch("http://localhost:3000/generate-music", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text: prompt })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.output_url) {
+          resultado.innerHTML = `<b>IA:</b> Música gerada com sucesso! <br><br> <audio controls src="${data.output_url}"></audio>`;
+        } else {
+          resultado.innerHTML = `<b>IA:</b> Ocorreu um erro ao gerar a música. ${data.err || ''}`;
+        }
+      } catch (error) {
+        resultado.innerHTML = `<b>IA:</b> Ocorreu um erro ao gerar a música. Verifique o console para mais detalhes.`;
+        console.error("Erro ao gerar música:", error);
       }
     }
 
@@ -141,7 +166,7 @@
       if (descricao === "") {
         resultado.innerHTML = `<b>IA:</b> Por favor, descreva o vídeo que deseja gerar.`;
       } else {
-        resultado.innerHTML = `<b>IA:</b> Criando vídeo com base na descrição: "<i>${descricao}</i>" 🎥<br><br><i>(Aqui entraria a integração com a API de geração de vídeo)</i>`;
+        resultado.innerHTML = `<b>IA:</b> A API de geração de vídeo ainda não foi configurada. Por favor, especifique qual API de texto para vídeo você gostaria de usar (por exemplo, D-ID, RunwayML, etc.) para que eu possa integrá-la.`;
       }
     }
   </script>
