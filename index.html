@@ -133,7 +133,7 @@
       }
 
       try {
-        const response = await fetch("/generate-music", {
+        const response = await fetch("http://localhost:3002/generate-music", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -158,15 +158,41 @@
       }
     }
 
-    function gerarVideo() {
+    async function gerarVideo() {
       const descricao = document.getElementById("descricaoVideo").value.trim();
       const resultado = document.getElementById("videoResultado");
 
       resultado.style.display = "block";
       if (descricao === "") {
         resultado.innerHTML = `<b>IA:</b> Por favor, descreva o vídeo que deseja gerar.`;
-      } else {
-        resultado.innerHTML = `<b>IA:</b> A API de geração de vídeo ainda não foi configurada. Por favor, especifique qual API de texto para vídeo você gostaria de usar (por exemplo, D-ID, RunwayML, etc.) para que eu possa integrá-la.`;
+        return;
+      }
+      
+      resultado.innerHTML = `<b>IA:</b> Gerando vídeo... 🎥`;
+
+      try {
+        const response = await fetch("http://localhost:3002/generate-video", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text: descricao })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.output_url) {
+          resultado.innerHTML = `<b>IA:</b> Vídeo gerado com sucesso! <br><br> <video controls src="${data.output_url}" width="100%"></video>`;
+        } else {
+          resultado.innerHTML = `<b>IA:</b> Ocorreu um erro ao gerar o vídeo. ${data.err || ''}`;
+        }
+      } catch (error) {
+        resultado.innerHTML = `<b>IA:</b> Ocorreu um erro ao gerar o vídeo. Verifique o console para mais detalhes.`;
+        console.error("Erro ao gerar vídeo:", error);
       }
     }
   </script>
